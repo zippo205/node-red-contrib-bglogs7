@@ -15,6 +15,13 @@
   "main": "index.js",
   "engine": "node 10.x.x",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zippo205/node-red-contrib-bglogs7.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zippo205/node-red-contrib-bglogs7/issues"
+  },
   "node-red": {
 	"nodes": {
 		"bglogs7": "bglogs7.js"

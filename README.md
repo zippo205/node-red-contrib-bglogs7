@@ -1,8 +1,8 @@
 BGlogS7 Node-RED node
 ===
 
-[![GitHub release](https://img.shields.io/github/release/dbaba/node-red-contrib-device-stats.svg)](https://github.com/zippo205/node-red-contrib-bglogs7/releases/latest)
-[![License MIT](https://img.shields.io/github/license/dbaba/node-red-contrib-device-stats.svg)](http://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/zippo205/node-red-contrib-bglogs7.svg)](https://github.com/zippo205/node-red-contrib-bglogs7/releases/latest)
+[![License MIT](https://img.shields.io/github/license/zippo205/node-red-contrib-bglogs7.svg)](http://opensource.org/licenses/MIT)
 
 **Note that this is a very special kind of logging interface. It is not a Siemens standard and is only supported by a certain plant manufacturer from Germany.**
 
