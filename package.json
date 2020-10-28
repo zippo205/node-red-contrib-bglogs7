@@ -1,0 +1,23 @@
+{
+  "name": "node-red-contrib-bglogs7",
+  "description": "Routine to receive logging data from Siemens S7 PLCs using RFC1006",
+  "version": "1.0.1",
+  "author":  "Vitali Willms vitali.willms@gmail.com",
+  "keywords": [
+	"node-red",
+    "S7",
+    "Siemens",
+    "PLC",
+    "RFC1006",
+    "iso-on-tcp",
+	"Beumer"
+  ],
+  "main": "index.js",
+  "engine": "node 10.x.x",
+  "license": "MIT",
+  "node-red": {
+	"nodes": {
+		"bglogs7": "bglogs7.js"
+	}
+  }
+}

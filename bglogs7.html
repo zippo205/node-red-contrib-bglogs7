@@ -1,0 +1,62 @@
+<script type="text/x-red" data-template-name="bglogs7">
+	<div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i><span> Host</span></label>
+        <input type="text" id="node-input-server" placeholder="ip.address" style="width:45%">
+        <label for="node-input-port" style="width:60px"> Port</label>
+        <input type="text" id="node-input-port" placeholder="ip.port" style="width:60px">
+    </div>
+	<div class="form-row">
+        <label for="node-input-localtsap"><i class="fa fa-plug"></i> LTSAP</label>
+        <input type="text" id="node-input-localtsap" placeholder="local tsap" style="width:45%">
+    </div>
+	<div class="form-row">
+        <label for="node-input-remotetsap"><i class="fa fa-plug"></i> RTSAP</label>
+        <input type="text" id="node-input-remotetsap" placeholder="remote tsap" style="width:45%">
+    </div>
+	<div class='form-row' id='node-enablelog'>
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-enablelog" style="display: inline-block; width: auto; vertical-align: top;">
+		<label for="node-input-enablelog" style="width: 45%;" ><span data-i18n="bglogs7.label.enablelog"></span></label>
+	</div>
+	<div class='form-row' id='node-enablepassthrough'>
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-enablepassthrough" style="display: inline-block; width: auto; vertical-align: top;">
+		<label for="node-input-enablepassthrough" style="width: 45%;" ><span data-i18n="bglogs7.label.enablepassthrough"></span></label>
+		<label for="node-input-passthroughport" style="width:100px"> <span data-i18n="bglogs7.label.passthroughport"></span></label>
+        <input type="text" id="node-input-passthroughport" placeholder="ip.port" style="width:60px">
+	</div>
+    <div class="form-row">
+		<label for="node-input-name">
+		  <i class="fa fa-tag"></i>
+		  <span data-i18n="node-red:common.label.name"></span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]node-red:common.label.name">
+    </div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('bglogs7',{
+        category: 'network',
+        color:"CornflowerBlue",
+        defaults: {
+            server: {value:""},
+            port: {value:"",validate:RED.validators.regex(/^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$/)},
+            localtsap: {value:"MC01LG01",validate:RED.validators.regex(/^[A-Z0-9]{8}$/)},
+            remotetsap: {value:"MC01LG01",validate:RED.validators.regex(/^[A-Z0-9]{8}$/)},   
+            name: {value:""},
+			enablelog : { value: false, required: false },
+			enablepassthrough : { value: true, required: false },
+			passthroughport : {value:"10102"} 
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-rocket",
+        label: function() {
+            return this.name || "mclog_"+ (this.server ? (this.server + ":" + this.port) : "1");
+			//return this.name || "mclog_1";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>
