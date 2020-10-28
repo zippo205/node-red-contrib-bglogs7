@@ -1,0 +1,51 @@
+<script type="text/x-red" data-help-name="bglogs7">
+    <h3> A node to connect to a BG PLC logging interface. </h3>
+	<p>It esteblishes a socket based communication using TCP protocol to a Siemens PLC. The PLC acts as a server and sends logging telegrams to the client after successful connection setup. 
+	</p>
+	<ul>
+		<li>Telegram separation: Complete message on transport level with RFC 1006 protocol</li>
+		<li>Max. telegram length: 1024 Byte user data (incl. header and trailer; without header of the RFC 1006 protocol part)</li>
+		<li>Port Number: default is 102</li>
+	</ul>
+		
+		
+	<h3>Message Input</h3>   
+	<p>
+	  This node connects to a Siemens PLC according to the node settings.
+	  The received PLC logs will be populated into <code>msg.payload</code> and published to the output port.
+	  The topic used can be configured in the node or, if left blank, can be set by msg.topic.
+	  This node works only when the important settings are configured properly. If some of them are left blank the node will use an incoming message as a configuration source and trigger.
+	</p>
+	<p>
+	  Beside the node settings, you can pass a <code>msg</code> object containg the following object as <code>msg.payload</code> property as well so that you can manage configuration dynamically. Please note that if the connection parameters change, the original connection will be closed and a new one established.
+	  </p>
+
+	  <ul>
+		<dt>•<code>host</code></dt>
+		<dd>The ip address of the PLC</dd>
+		<dt>•<code>port</code></dt>
+		<dd>The port of the PLC (usually 102)</dd>
+		<dt>•<code>localtsap</code></dt>
+		<dd>Local TSAP. TSAP = Transport Service Access Point.</dd>
+		<dt>•<code>remotetsap</code></dt>
+		<dd>Remote TSAP (usually same as local TSAP)</dd>
+		<dt>•<code>enablelog</code></dt>
+		<dd><code>true</code> enables additional logs, <code>false</code> otherwise (default)</dd>
+	  </ul>
+
+	 <h3>Example Output</h3>
+	 <p><code>msg.payload</code></p>
+	 <pre>
+	 {
+		"topic": "LO_Msg",
+		"host": "192.168.1.6",
+		"port": "102",
+		"payload":[
+			69,78,103,61,0,201,201,61,185,
+			42,7,212,68,56,48,50,32,32,32,
+			32,32,32,0,3,83,72,67,79,82,69,
+			32,32,32,32,0,2,50,63,0,0
+		 ]
+	  }
+	  </pre>
+</script>
