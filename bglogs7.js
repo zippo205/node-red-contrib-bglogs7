@@ -21,7 +21,7 @@ module.exports = function(RED) {
 	const BGLOG_INNER_HEADER_LEN=4;
 	
 	var reconnectTime = RED.settings.socketReconnectTime||10000;
-	var socketTimeout = RED.settings.socketTimeout||null;
+	var socketTimeout = RED.settings.socketTimeout||120000;
 	var socketKeepAliveTime = RED.settings.socketKeepAliveTime||60000;
 	
     var net = require('net');
@@ -209,7 +209,7 @@ module.exports = function(RED) {
 		var setupPassThroughTcpServer = function() {
 			if(node.enablepassthrough && node.passthroughport > 0){
 				server = net.createServer(function (socket) {
-					socket.setKeepAlive(true,120000);
+					socket.setKeepAlive(true,socketKeepAliveTime);
 					if (socketTimeout !== null) { socket.setTimeout(socketTimeout); }
 					node.log("Add socket connected to passthrough TCP server. remoteaddress=<" + socket.remoteAddress + ">, remoteport=<" + socket.remotePort + ">");
 					connectedSockets.push(socket);
@@ -258,12 +258,12 @@ module.exports = function(RED) {
 		var setupTcpClient = function() {
 			if (node.host && node.port && node.localtsap && node.remotetsap) {
 				if(node.enablelog)
-					node.log("Setup client host=<" + node.host + ">, port=<" + node.port + ">, ltsap=<"+ node.localtsap + ">, rtsap=<" + node.remotetsap + ">");
+					node.log("Setup client host=<" + node.host + ">, port=<" + node.port + ">, ltsap=<"+ node.localtsap + ">, rtsap=<" + node.remotetsap + ">, keepalive=<" +socketKeepAliveTime + ">, timeout=<" + socketTimeout +">");
 				node.status({fill:"grey",shape:"dot",text:"connecting"});
 				client = net.Socket();
 				if (socketTimeout !== null)
 					{ client.setTimeout(socketTimeout);}
-				node.status({fill:"grey",shape:"dot",text:"connecting"});
+				client.setKeepAlive(true,socketKeepAliveTime);
 				client.connect(node.port, node.host, function() {
 					if(node.enablelog)
 						node.log("Client connected. Send CR to init RFC1006. host=<" + node.host + ">, port=<" + node.port + ">, ltsap=<"+ node.localtsap + ">, rtsap=<" + node.remotetsap + ">");
@@ -275,7 +275,6 @@ module.exports = function(RED) {
 					node.isRFC1006initialized = false;
 					initRFC1006Timeout = setTimeout(initRFC1006TimeoutHandler,5000);
 				});
-				client.setKeepAlive(true,socketKeepAliveTime);
 				client.on('error', function (err) {
 					node.error("Error occured! host=<" + node.host + ">, port=<" + node.port + ">, error=<"+ err.toString() + ">");
 					node.status({fill:"red",shape:"dot",text:"error"});
@@ -288,7 +287,7 @@ module.exports = function(RED) {
                 });
 				client.on('close', function() {
 					if(node.enablelog)
-						node.log("Received connction close event! host=<" + node.host + ">, port=<" + node.port + ">");
+						node.log("Received connection close event! host=<" + node.host + ">, port=<" + node.port + ">");
                     node.status({fill:"red",shape:"ring",text:"disconnected"});
                     node.connected = false;
 					node.tcp_closing = false;
@@ -296,7 +295,7 @@ module.exports = function(RED) {
                     client.destroy();
                     if (!node.node_closing) {
 						if(node.enablelog)
-							node.warn("Connection lost! Trigger reconnect. host=<" + node.host + ">, port=<" + node.port + ">");
+							node.warn("Connection closed! Trigger reconnect. host=<" + node.host + ">, port=<" + node.port + ">");
 						reconnectTimeout = setTimeout(setupTcpClient,reconnectTime);
                     } 
 					else {
@@ -310,19 +309,19 @@ module.exports = function(RED) {
 						//node.connected = node.isRFC1006initialized = node.tcp_closing = false;
 						//clearTimeout(initRFC1006Timeout);
 						if(node.enablelog)
-							node.warn("Received connection timeout event! host=<" + node.host + ">, port=<" + node.port + ">");
-						node.status({fill:"grey",shape:"dot",text:"connect-timeout"});
-						/*if (client) {
-							client.connect(node.port, node.host, function() {
-								node.log(RED._("bglog.status.connected",{host:node.host,port:node.port}));
-								node.status({fill:"green",shape:"dot",text:"connected"});
-								node.connected = true;
-								//create CR message and send it
-								var cr_msg = createCRMsg(node);
-								client.write(cr_msg);
-								initRFC1006 = true;
-								initRFC1006Timeout = setTimeout(initRFC1006TimeoutHandler,5000);
-							});
+							node.warn("Received connection timeout event! Close socket. host=<" + node.host + ">, port=<" + node.port + ">");
+						node.status({fill:"grey",shape:"dot",text:"timeout"});
+						node.tcp_closing = true;
+						client.destroy();
+						/*if (!node.node_closing) {
+							if(node.enablelog)
+								node.warn("Trigger reconnect. host=<" + node.host + ">, port=<" + node.port + ">");
+							reconnectTimeout = setTimeout(setupTcpClient,reconnectTime);
+						} 
+						else {
+							if (node.doneClose) { 
+								node.doneClose(); 
+							}
 						}*/
 					}
                 });
@@ -377,7 +376,7 @@ module.exports = function(RED) {
 											//Datalen defines the real Data contained in this Package except header and reserved stuff
 											let datalen = tlgLength - TOTAL_HEADER_LENGTH;
 											if(node.enablelog)
-												node.log("Received TPDU data. Length=<" + tlgLength + ">, host=<" + node.host + ">, port=<" + node.port + ">");
+												node.log(`Received TPDU data. Length=<${tlgLength}>, host=<${node.host}>, port=<${node.port}>`);
 											
 											if (data[TPKT_HEADSIZE +  offset] !== TPDU_HEADER_LENGTH){
 												error = true;
@@ -385,7 +384,7 @@ module.exports = function(RED) {
 											else{
 												if (data[TPKT_HEADSIZE + 2 + offset] !== TPDU_EOT){
 													//todo add to buffer
-													node.error("Message incomplete, Fragmentation in todo! host=<" + node.host + ">, port=<" + node.port + ">");
+													node.error(`Message incomplete, Fragmentation in todo! host=<${node.host}>, port=<${node.port}>`);
 												}
 												else{
 													let buf2 = Buffer.allocUnsafe(datalen);
@@ -397,7 +396,7 @@ module.exports = function(RED) {
 														}
 													}
 													//extract paylod
-													node.log("Extract TPDU payload and forward it. MsgLength=<" + tlgLength + ">, PayloadLen=<" + datalen + ">");
+													node.log(`Extract TPDU payload and forward it. MsgLength=<${tlgLength}>, PayloadLen=<${datalen}>`);
 													parseTPDUMsg(node,buf2,node.enablelog);
 													//msg1 = {topic:"tpdu_data","host":node.host,"port":node.port,payload:buf2};
 													//node.log("Extract TPDU payload and forward it. MsgLength=<" + tlgLength + ">, PayloadLen=<" + datalen + ">");
@@ -406,17 +405,17 @@ module.exports = function(RED) {
 											}
 										   break;
 										case TPDU_CR:
-											node.error("Received Connection Request (CR) telegram! host=<" + node.host + ">, port=<" + node.port + ">");
+											node.error(`Received Connection Request (CR) telegram! host=<${node.host}>, port=<${node.port}>`);
 											break;
 										case TPDU_CC:
 											if(node.enablelog)
-												node.log("Received Connection Confirm (CC) telegram. MsgLength=<" + tlgLength + ">, host=<" + node.host + ">, port=<" + node.port + ">");
+												node.log(`Received Connection Confirm (CC) telegram. MsgLength=<${tlgLength}>, host=<${node.host}>, port=<${node.port}>`);
 											clearTimeout(initRFC1006Timeout);
 											node.isRFC1006initialized = true;
 											node.status({fill:"green",shape:"dot",text:"connected"});
 											break;
 										 default:
-											node.error("Received unknown message type! host=<" + node.host + ">, port=<" + node.port + ">");
+											node.error(`Received unknown message type! host=<${node.host}>, port=<${node.port}>`);
 											error = true;
 											break;
 									}
@@ -427,11 +426,11 @@ module.exports = function(RED) {
 							}while(!error && (data.length - offset) > 0);
 						}
 						else{
-							node.error("Received invalid data format. Has to be a byte buffer! host=<" + node.host + ">, port=<" + node.port + ">");
+							node.error(`Received invalid data format. Has to be a byte buffer! host=<${node.host}>, port=<${node.port}>`);
 						}
 					}
 					catch(err) {
-						node.error(err, "Exception occured!");
+						node.error(`Exception occured! error=<${err.toString()}>`);
 					}
 					finally {
 					}
@@ -473,7 +472,7 @@ module.exports = function(RED) {
 				if (client) { 
 					if(node.connected && !node.tcp_closing){
 						if(node.enablelog)
-							node.log("Client already connected. Close it first. oldhost=<" + oldhost + ">, oldport=<" + oldport + ">, oldltsap=<"+ oldlocaltsap + ">, oldrtsap=<" + oldremotetsap + ">");
+							node.log(`Client already connected. Close it first. oldhost=<${oldhost}>, oldport=<${oldport}>, oldltsap=<${oldlocaltsap}>, oldrtsap=<${oldremotetsap}>`);
 						node.status({fill:"gray",shape:"ring",text:"closing"});
 						node.tcp_closing = true;
 						client.end();
@@ -511,6 +510,7 @@ module.exports = function(RED) {
 			if (server) { server.close(); }
 			if (!node.connected) { done(); }
 		});
-    }
+	}
+	
     RED.nodes.registerType("bglogs7",BgLogS7);
 }

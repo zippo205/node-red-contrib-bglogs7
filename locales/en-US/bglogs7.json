@@ -1,9 +1,9 @@
 {
   "bglogs7" : {
     "label" : {
-      "enablelog" : "Enable logging",
-	  "enablepassthrough" : "Enable passthrough",
-	  "passthroughport" : "Passthrough server port",
+      "enablelog" : "Debug",
+	  "enablepassthrough" : "Passthrough",
+	  "passthroughport" : "Port",
       "mem" : "Memory Stats"
     },
     "status" : {
